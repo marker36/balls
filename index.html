@@ -3,147 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reactive 3D Background</title>
+    <title>3D Car Showroom</title>
     <style>
-        /* Base page styling */
-        body {
-            margin: 0;
-            overflow: hidden; /* Prevents scrollbars from canvas pushing the layout */
-            background-color: #050505;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
+        body { margin: 0; overflow: hidden; background-color: #050505; font-family: sans-serif; }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        
+        .ui-layer {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10; pointer-events: none;
         }
 
-        /* The 3D canvas stays fixed in the background */
-        #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
+        .btn {
+            pointer-events: auto;
+            padding: 15px 40px; margin: 10px;
+            background: transparent; border: 2px solid #00d2ff;
+            color: #00d2ff; cursor: pointer; font-size: 1.2rem;
+            transition: 0.3s; text-transform: uppercase; letter-spacing: 2px;
         }
-
-        /* Overlay content stays above the canvas */
-        .content {
-            position: relative;
-            z-index: 2;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            /* Crucial: Allows the mouse to interact with the canvas behind the text */
-            pointer-events: none; 
-        }
-
-        h1 {
-            font-size: 4rem;
-            letter-spacing: 3px;
-            margin: 0;
-            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
-        }
-
-        p {
-            font-size: 1.2rem;
-            color: #888888;
-            letter-spacing: 1px;
-            margin-top: 15px;
-        }
+        .btn:hover { background: #00d2ff; color: #000; box-shadow: 0 0 20px #00d2ff; }
+        #hidden-ui { display: none; }
     </style>
 </head>
 <body>
-    
+
     <div id="canvas-container"></div>
     
-    <div class="content">
-        <h1>Interactive Depth</h1>
-        <p>Move your mouse to shift the perspective.</p>
+    <div class="ui-layer" id="main-menu">
+        <h1>CAR SHOWROOM</h1>
+        <button class="btn" onclick="startGame()">Play</button>
+        <button class="btn">Sign In</button>
     </div>
 
-    <!-- Load Three.js from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
     <script>
-        // 1. Scene Setup
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio); // Ensures sharp rendering on high-res displays
         container.appendChild(renderer.domElement);
 
-        // 2. Generate 3D Particles
-        const particlesGeometry = new THREE.BufferGeometry();
-        const particlesCount = 4000;
-        const posArray = new Float32Array(particlesCount * 3); // 3 coordinates (x,y,z) per particle
+        // Particle background
+        const particles = new THREE.Points(
+            new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(3000), 3)),
+            new THREE.PointsMaterial({ size: 0.02, color: 0x444444 })
+        );
+        scene.add(particles);
 
-        for(let i = 0; i < particlesCount * 3; i++) {
-            // Spread particles across a wide 3D space (-5 to +5 on each axis)
-            posArray[i] = (Math.random() - 0.5) * 10;
+        // Car Group
+        const cars = new THREE.Group();
+        scene.add(cars);
+
+        // Simple Geometric Car Factory
+        function createCar(color, x) {
+            const car = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 2), new THREE.MeshPhongMaterial({ color }));
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 1), new THREE.MeshPhongMaterial({ color: 0x333333 }));
+            roof.position.y = 0.35;
+            car.add(body, roof);
+            car.position.x = x;
+            return car;
         }
 
-        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        
-        const material = new THREE.PointsMaterial({
-            size: 0.005,
-            color: 0x00d2ff, // Neon blue
-            transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending // Creates a glowing effect when particles overlap
+        cars.add(createCar(0xff0000, -2.5));
+        cars.add(createCar(0x00ff00, 0));
+        cars.add(createCar(0x0000ff, 2.5));
+        cars.visible = false; // Hidden initially
+
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5);
+        scene.add(light, new THREE.AmbientLight(0x404040));
+
+        camera.position.z = 5;
+
+        function startGame() {
+            document.getElementById('main-menu').style.display = 'none';
+            cars.visible = true;
+        }
+
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth / 2) * 0.002;
+            mouseY = (e.clientY - window.innerHeight / 2) * 0.002;
         });
-
-        const particlesMesh = new THREE.Points(particlesGeometry, material);
-        scene.add(particlesMesh);
-
-        camera.position.z = 3; // Pull camera back to see the particles
-
-        // 3. Track Mouse Movement
-        let mouseX = 0;
-        let mouseY = 0;
-        let targetX = 0;
-        let targetY = 0;
-        
-        const windowHalfX = window.innerWidth / 2;
-        const windowHalfY = window.innerHeight / 2;
-
-        document.addEventListener('mousemove', (event) => {
-            mouseX = (event.clientX - windowHalfX);
-            mouseY = (event.clientY - windowHalfY);
-        });
-
-        // 4. Animation and Reactivity Loop
-        const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
-            const elapsedTime = clock.getElapsedTime();
-
-            // Apply constant slow rotation
-            particlesMesh.rotation.y = elapsedTime * 0.05;
-            particlesMesh.rotation.x = elapsedTime * 0.02;
-
-            // Apply reactive rotation based on mouse position
-            targetX = mouseX * 0.001;
-            targetY = mouseY * 0.001;
-            
-            // The easing effect (0.05) creates a smooth lag behind the cursor
-            particlesMesh.rotation.y += 0.05 * (targetX - particlesMesh.rotation.y);
-            particlesMesh.rotation.x += 0.05 * (targetY - particlesMesh.rotation.x);
-
+            // Reactive rotation
+            cars.rotation.y += (mouseX - cars.rotation.y) * 0.05;
+            cars.rotation.x += (mouseY - cars.rotation.x) * 0.05;
             renderer.render(scene, camera);
         }
-
         animate();
-
-        // 5. Handle Window Resizing
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
