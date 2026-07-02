@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickRide | Book Your Taxi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">QUICKRIDE</div>
+        <button class="auth-btn" id="openModal">Sign In</button>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-overlay"></div>
+        <div class="booking-container glass">
+            <h1>Book your ride in seconds</h1>
+            <form id="bookingForm">
+                <input type="text" placeholder="Pickup Location">
+                <input type="text" placeholder="Drop-off Location">
+                <select>
+                    <option>Moto</option>
+                    <option>Auto</option>
+                    <option>Sedan</option>
+                </select>
+                <button type="submit">Book Now</button>
+            </form>
+        </div>
+    </header>
+
+    <section id="services" class="reveal">
+        <h2>Our Services</h2>
+        <div class="grid-container">
+            <div class="card">Moto</div>
+            <div class="card">Auto</div>
+            <div class="card">Sedan</div>
+        </div>
+    </section>
+
+    <!-- Modal -->
+    <div class="modal" id="authModal">
+        <div class="modal-content glass">
+            <span class="close">&times;</span>
+            <h2>Welcome Back</h2>
+            <input type="email" placeholder="Email">
+            <button>Login</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
